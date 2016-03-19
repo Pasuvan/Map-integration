@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+<html> 
+<head> 
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" /> 
+  <title>Google Maps Multiple Markers</title> 
+  <script src="http://maps.google.com/maps/api/js" 
+          type="text/javascript"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+</head> 
+<body>
+  <div id="map" style="width: 1000px; height: 400px;"></div>
+ <div id="right-panel">
+      <p>Total Distance: <span id="total"></span></p>
+    </div>
+
+  <script type="text/javascript">
+
+	var directionsDisplay;
+	var directionsService = new google.maps.DirectionsService();
+	var map;
+	var locations1 = [
+	              	  ['muthu1',43.152068, -79.165230,43.117574, -79.247694],
+		          ['muthu2',43.096214,-79.037739,42.8864468, -78.8783689],
+		          ['muthu3',43.1371937, -78.8848068,43.0851069, -78.8722341],
+		         ['muthu4',43.1271937, -80.8848068,43.0751069, -80.8722341]
+		    ];
+	var waypoints = {"muthu1":{"0":{"lat":"43.152068","lng":"-79.165230"},"1":{"lat":"43.15102","lng":"-79.16561"},"2":{"lat":"43.15061","lng":"-79.16771"},"3":{"lat":"43.14328","lng":"-79.16754"},"4":{"lat":"43.159180","lng":"-79.213643"}},"muthu2":{"0":{"lat":"43.09502","lng":"-79.02412"},"1":{"lat":"43.03452","lng":"-78.98146"},"2":{"lat":"42.98531","lng":"-78.91143"}},"muthu3":{"0":{"lat":"43.136009","lng":"-78.889044"},"1":{"lat":"43.083483","lng":"-78.878380"},"3":{"lat":"43.085489","lng":"-78.886705"}},"muthu4":{"11":{"lat":"43.121613","lng":"-80.884309"},"12":{"lat":"43.120705","lng":"-80.883837"},"13":{"lat":"43.120110","lng":"-80.883493"},"14":{"lat":"43.119530","lng":"-80.883193"}}};
+
+var markerpoint = {"muthu1":{"13":{"lat":"43.159180","lng":"-79.213643"}},"muthu2":{"5":{"lat":"42.98531","lng":"-78.91143"}},"muthu3":{"8":{"lat":"43.085489","lng":"-78.886705"}},"muthu4":{"12":{"lat":"43.119530","lng":"-80.883193"}}};
+
+	var directionsDisplay;
+	var directionsService = new google.maps.DirectionsService();
+	var map;
+	function initialize() {
+	  directionsDisplay = new google.maps.DirectionsRenderer({
+		    suppressMarkers: true
+	//		    polylineOptions: polylineOptionsActual
+	  });
+	  var awal = new google.maps.LatLng(43,-79);
+	  var mapOptions = {
+	    zoom: 10,
+	    center: awal
+	  };
+	  map = new google.maps.Map(document.getElementById('map'), mapOptions);
+	  directionsDisplay.setMap(map);
+
+var infoWindow = new google.maps.InfoWindow();
+        var lat_lng = new Array();
+        var latlngbounds = new google.maps.LatLngBounds();
+ 
+        //Initialize the Path Array
+     var path = new google.maps.MVCArray();
+ 
+	  var i;
+	    directionsServices = [];
+	    directionsDisplays = [];
+	    for (i = 0; i < locations1.length; i++) {
+	    	var iconPath="map.png";
+	      directionsServices[i] = new google.maps.DirectionsService();
+	      var start = new google.maps.LatLng(locations1[i][1], locations1[i][2]);
+	      var end = new google.maps.LatLng(locations1[i][3], locations1[i][4]);
+	      var waypts = [];
+		var path1 = [];
+	      $.each(waypoints, function(way, value){
+	    	  if(way==locations1[i][0]){console.log(way);
+	    	  $.each(value, function(key, point){
+	    		if (point.lat!=undefined && point.lng!= undefined ){
+			
+				/** set waypoints  **/
+			      stop = new google.maps.LatLng(point.lat, point.lng);
+				  waypts.push({
+				      location:stop,
+				      stopover:true});
+				$.each(markerpoint, function(mar, marValue){
+					if(mar==locations1[i][0]){
+	    	 			  $.each(marValue, function(key1, point1){	
+						/** set marker icon and title  **/
+						    var myLatlng = new google.maps.LatLng(point1.lat, point1.lng);
+						    lat_lng.push(myLatlng);
+						    var marker = new google.maps.Marker({
+							position: myLatlng,
+							map: map,
+							icon: iconPath,//give icon path
+							title: mar
+//							lable: ''
+						    });
+						    latlngbounds.extend(marker.position);
+						    (function (marker, point1) {
+							google.maps.event.addListener(marker, "click", function (e) {
+							    infoWindow.setContent(mar);
+							    infoWindow.open(map, marker);
+							});
+						    })(marker, point1);
+						//}
+						map.setCenter(latlngbounds.getCenter());
+						map.fitBounds(latlngbounds);
+					   });
+					}
+				});
+			/** set poly line  **/
+			path1.push(new google.maps.LatLng(point.lat, point.lng));
+			var poly = new google.maps.Polyline({ path:path1, map: map,strokeColor: 'red',strokeOpacity: 1.0,strokeWeight: 10 });
+}
+	    	  });
+
+	    	  }
+
+	      });
+
+	      var request = {
+	    		  origin: start,
+	    		  destination: end,
+	    		waypoints: [],//here set your waypoints
+	    		  optimizeWaypoints: true,
+	    		  travelMode: google.maps.TravelMode.DRIVING
+	    	      };
+		directionsServices[i].route(request, function(response, status) {
+		if (status == google.maps.DirectionsStatus.OK) {
+		    directionsDisplays.push(new google.maps.DirectionsRenderer({preserveViewport:true}));
+		  directionsDisplays[directionsDisplays.length-1].setMap(map);
+		  directionsDisplays[directionsDisplays.length-1].setDirections(response);
+		} else alert("Directions request failed:"+status);
+	      });
+	      
+	    }
+	   }
+
+	google.maps.event.addDomListener(window, 'load', initialize);
+
+/*function initMap() {
+  var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 4,
+    center: {lat: -24.345, lng: 134.46}  // Australia.
+  });
+
+  var directionsService = new google.maps.DirectionsService;
+  var directionsDisplay = new google.maps.DirectionsRenderer({
+    draggable: true,
+    map: map,
+    panel: document.getElementById('right-panel')
+  });
+
+  directionsDisplay.addListener('directions_changed', function() {
+    computeTotalDistance(directionsDisplay.getDirections());
+  });
+
+  displayRoute('Perth, WA', 'Sydney, NSW', directionsService,
+      directionsDisplay);
+}
+
+function displayRoute(origin, destination, service, display) {
+  
+}
+
+function computeTotalDistance(result) {
+  var total = 0;
+  var myroute = result.routes[0];
+  for (var i = 0; i < myroute.legs.length; i++) {
+    total += myroute.legs[i].distance.value;
+  }
+  total = total / 1000;
+  document.getElementById('total').innerHTML = total + ' km';
+}*/
+
+/* var markers = [
+            {
+                "title": 'Alibaug',
+                "lat": '43.152068',
+                "lng": '-79.165230',
+                "description": 'Alibaug is a coastal town and a municipal council in Raigad District in the Konkan region of Maharashtra, India.'
+            } ,
+            {
+                "title": 'Mumbai',
+                "lat": '43.15061',
+                "lng": '-79.16771',
+                "description": 'Mumbai formerly Bombay, is the capital city of the Indian state of Maharashtra.'
+            }
+        ,
+            {
+                "title": 'Pune',
+                "lat": '43.117574',
+                "lng": '-79.24769',
+                "description": 'Pune is the seventh largest metropolis in India, the second largest in the state of Maharashtra after Mumbai.'
+            }
+    ];
+var waypoint = [
+            {
+                "title": 'Alibaug',
+                "lat": '43.152068',
+                "lng": '-79.165230',
+                "description": 'Alibaug is a coastal town and a municipal council in Raigad District in the Konkan region of Maharashtra, India.'
+            }
+        ,
+            {
+                "title": 'Mumbai',
+                "lat": '43.15061',
+                "lng": '-79.16771',
+                "description": 'Mumbai formerly Bombay, is the capital city of the Indian state of Maharashtra.'
+            }
+       
+    ];
+    window.onload = function () {
+        var mapOptions = {
+            center: new google.maps.LatLng(43.152068,-79.165230),
+            zoom: 10
+        //    mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        var infoWindow = new google.maps.InfoWindow();
+        var lat_lng = new Array();
+        var latlngbounds = new google.maps.LatLngBounds();
+var path1="../map.png";
+        for (i = 0; i < markers.length; i++) {
+            var data = markers[i]
+            var myLatlng = new google.maps.LatLng(data.lat, data.lng);
+            lat_lng.push(myLatlng);
+            var marker = new google.maps.Marker({
+                position: myLatlng,
+                map: map,
+		icon: path1,
+		      
+                title: data.title
+            });
+            latlngbounds.extend(marker.position);
+            (function (marker, data) {
+                google.maps.event.addListener(marker, "click", function (e) {
+                    infoWindow.setContent(data.description);
+                    infoWindow.open(map, marker);
+                });
+            })(marker, data);
+        }
+        map.setCenter(latlngbounds.getCenter());
+        map.fitBounds(latlngbounds);
+ 
+        //***********ROUTING****************/
+ 
+        //Initialize the Path Array
+ /*      var path = new google.maps.MVCArray();
+ 
+        //Initialize the Direction Service
+        var service = new google.maps.DirectionsService();
+ 
+        //Set the Path Stroke Color
+        var poly = new google.maps.Polyline({ map: map,strokeColor: 'red' });
+ 
+        //Loop and Draw Path Route between the Points on MAP
+   //     for (var i = 0; i < lat_lng.length; i++) {
+  $.each(waypoint, function(key, val) {
+            path.push(new google.maps.LatLng(val.lat, val.lng));
+    });
+ //           if ((i + 1) < lat_lng.length) {
+      //          var src = lat_lng[i];
+ //               var des = lat_lng[i + 1];
+//console.log(src);
+
+ //               path.push(lat_lng[i]);
+//console.log(path);
+                poly.setPath(path);
+		 var start = new google.maps.LatLng(43.152068,-79.165230);
+		 var end = new google.maps.LatLng(43.117574,-79.24769);
+                service.route({
+                    origin: start,
+                    destination: end,
+                    travelMode: google.maps.DirectionsTravelMode.DRIVING
+                }, function (result, status) {
+                    if (status == google.maps.DirectionsStatus.OK) {
+                      /*  for (var i = 0, len = result.routes[0].overview_path.length; i < len; i++) {
+                            path.push(result.routes[0].overview_path[i]);
+                        }*/
+ /*                   }
+                });
+           // }
+      //  }
+    }
+*/
+//google.maps.event.addDomListener(window, 'load', initMap);
+  </script>
+</body>
+</html>
+
+
